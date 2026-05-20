@@ -1,0 +1,6 @@
+@VerstaOrders_HostAddress = http://localhost:5259
+
+GET {{VerstaOrders_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
