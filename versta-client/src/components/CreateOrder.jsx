@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Form, Button, Container, Row, Col, Alert } from 'react-bootstrap';
 
 const CreateOrder = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     senderCity: '',
     senderAddress: '',
@@ -168,6 +170,8 @@ const CreateOrder = () => {
             <Button variant="primary" type="submit">
               Создать заказ
             </Button>
+
+            <Button variant='secondary' style={{marginLeft:"10px"}} onClick={() => {navigate('/');}}>Назад</Button>
           </Form>
         </Col>
       </Row>

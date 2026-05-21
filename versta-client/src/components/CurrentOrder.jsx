@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { Form, Container, Row, Col, Card } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
+import { Form, Container, Row, Col, Card, Button } from 'react-bootstrap';
 
 const CurrentOrder = () => {
+  const navigate = useNavigate();
   const defaultOrder = {
     orderNumber: 'ЗАКАЗ-001',
     senderCity: 'Москва',
@@ -94,6 +96,8 @@ const CurrentOrder = () => {
               </Form>
             </Card.Body>
           </Card>
+          <br/>
+          <Button variant='secondary' onClick={() => {navigate('/');}}>Назад</Button>
         </Col>
       </Row>
     </Container>
