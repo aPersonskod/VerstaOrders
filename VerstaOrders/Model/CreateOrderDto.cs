@@ -1,8 +1,6 @@
-﻿namespace VerstaOrders.Model;
+namespace VerstaOrders.Model;
 
-public record Order(
-    Guid OrderId,
-    string OrderNumber,
+public record CreateOrderDto(
     string TownSender,
     string AddressSender,
     string TownReceiver,

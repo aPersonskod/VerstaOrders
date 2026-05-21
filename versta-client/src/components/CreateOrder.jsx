@@ -1,9 +1,11 @@
-import { useState } from 'react';
+import { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { Form, Button, Container, Row, Col, Alert } from 'react-bootstrap';
+import {ApiHelper} from "../ApiHelper.jsx";
 
 const CreateOrder = () => {
   const navigate = useNavigate();
+  const apiHelper = new ApiHelper();
   const [formData, setFormData] = useState({
     senderCity: '',
     senderAddress: '',
@@ -17,6 +19,38 @@ const CreateOrder = () => {
   const [errors, setErrors] = useState({});
   // Состояние успешной отправки (для демонстрации)
   const [submitted, setSubmitted] = useState(false);
+
+  const createOrder = async () => {
+    try {
+        let query = `${apiHelper.orderServiceBaseAddress}`;
+        let options = {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(
+                {
+                    "townSender": formData.senderCity,
+                    "addressSender": formData.senderAddress,
+                    "townReceiver": formData.receiverCity,
+                    "addressReceiver": formData.receiverAddress,
+                    "productWeight": formData.weight,
+                    "pickupDate": formData.pickupDate
+                }
+            ),
+        }
+        const response = await fetch(query, options);
+        if (!response.ok) {
+            let localError = await response.json();
+            alert(localError.error);
+            return "Ошибка сохранения данных !!!";
+        }
+    } catch (err) {
+        alert(err);
+    }
+    return "";
+  }
+
 
   // Обработчик изменения любого поля
   const handleChange = (e) => {
@@ -44,7 +78,7 @@ const CreateOrder = () => {
   };
 
   // Обработчик отправки формы
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
@@ -52,9 +86,13 @@ const CreateOrder = () => {
       setSubmitted(false);
     } else {
       setErrors({});
-      setSubmitted(true);
-      // Здесь обычно отправляют данные на сервер
-      console.log('Данные формы:', formData);
+      // Созранение на сервер
+      let res = await createOrder();
+      if(res === "") {
+        setSubmitted(true);
+      } else {
+        return;
+      }
       // Сбросить сообщение об успехе через 5 секунд
       setTimeout(() => setSubmitted(false), 5000);
     }

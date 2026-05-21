@@ -11,7 +11,7 @@ const router = createBrowserRouter([
     { path: '/', Component: App, children: [
       { path: '', Component: AllOrders },
       { path: '/createOrder', Component: CreateOrder },
-      { path: '/order/:id', Component: CurrentOrder }
+      { path: '/order/:orderId', Component: CurrentOrder }
     ]}
 ]);
 

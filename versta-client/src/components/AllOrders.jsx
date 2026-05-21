@@ -1,10 +1,40 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Container, Row, Col, Card } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import {ApiHelper} from "../ApiHelper.jsx";
 
 const AllOrders = () => {
   const navigate = useNavigate();
-  const orders = [
+  const apiHelper = new ApiHelper();
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const fetchOrders = async () => {
+    try {
+        let query = `${apiHelper.orderServiceBaseAddress}/GetOrders`;
+        let options = {
+            method: 'GET'
+        }
+        const response = await fetch(query, options);
+        if (!response.ok) {
+            let localError = await response.json();
+            throw new Error(localError.error);
+        }
+        const result = await response.json();
+        setOrders(result);
+    } catch (err) {
+        setError(err);
+    } finally {
+        setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const ordersLocal = [
   {
     id: '1',
     orderNumber: 'ORD-001',
@@ -50,15 +80,18 @@ const AllOrders = () => {
     );
   }
 
+  if (loading) return <div>Loading data...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
   return (
     <Container className="mt-4">
       <h2 className="mb-4">Список заказов</h2>
       <Row xs={1} md={2} lg={3} className="g-4">
         {orders.map((order) => (
-          <Col key={order.id}>
+          <Col key={order.orderId}>
             <Card
               className="h-100 shadow-sm order-card"
-              onClick={() => handleCardClick(order.id)}
+              onClick={() => handleCardClick(order.orderId)}
               style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
               onMouseEnter={(e) =>
                 (e.currentTarget.style.transform = 'translateY(-5px)')
@@ -72,15 +105,15 @@ const AllOrders = () => {
                   Заказ № {order.orderNumber}
                 </Card.Title>
                 <Card.Text>
-                  <strong>Город отправителя:</strong> {order.senderCity}
+                  <strong>Город отправителя:</strong> {order.townSender}
                   <br />
-                  <strong>Адрес отправителя:</strong> {order.senderAddress}
+                  <strong>Адрес отправителя:</strong> {order.addressSender}
                   <br />
-                  <strong>Город получателя:</strong> {order.receiverCity}
+                  <strong>Город получателя:</strong> {order.townReceiver}
                   <br />
-                  <strong>Адрес получателя:</strong> {order.receiverAddress}
+                  <strong>Адрес получателя:</strong> {order.addressReceiver}
                   <br />
-                  <strong>Вес груза:</strong> {order.weight} кг
+                  <strong>Вес груза:</strong> {order.productWeight} кг
                 </Card.Text>
               </Card.Body>
             </Card>
