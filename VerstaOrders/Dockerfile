@@ -1,12 +1,23 @@
-﻿FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-ARG BUILD_CONFIGURATION=Release
+﻿FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS base
+USER $APP_UID
 WORKDIR /app
-COPY . .
+EXPOSE 8080
+EXPOSE 8081
 
-RUN dotnet restore "VerstaOrders.csproj"
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+ARG BUILD_CONFIGURATION=Release
+WORKDIR /src
+COPY ["VerstaOrders/VerstaOrders.csproj", "VerstaOrders/"]
+RUN dotnet restore "VerstaOrders/VerstaOrders.csproj"
+COPY . .
+WORKDIR "/src/VerstaOrders"
+RUN dotnet build "VerstaOrders.csproj" -c $BUILD_CONFIGURATION -o /app/build
+
+FROM build AS publish
+ARG BUILD_CONFIGURATION=Release
 RUN dotnet publish "VerstaOrders.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS final
+FROM base AS final
 WORKDIR /app
-COPY --from=build /app/publish .
+COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "VerstaOrders.dll"]

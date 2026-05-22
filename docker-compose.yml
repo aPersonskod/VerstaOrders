@@ -19,8 +19,8 @@ services:
   versta_app:
     image: orders
     build:
-      context: ./VerstaOrders
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: VerstaOrders/Dockerfile
     ports:
       - "5259:8080"
     environment:
