@@ -1,0 +1,44 @@
+﻿networks:
+  versta-dev:
+    driver: bridge
+services:
+  postgres_versta:
+    container_name: postgres-orders
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: versta_db
+    ports:
+      - "5432:5432"
+    networks:
+      - versta-dev
+    volumes:
+      - postgres-order-data:/var/lib/postgresql/18/data
+      
+  versta_app:
+    image: orders
+    build:
+      context: ./VerstaOrders
+      dockerfile: Dockerfile
+    ports:
+      - "5259:8080"
+    environment:
+      - ASPNETCORE_HTTP_PORTS=8080
+    networks:
+      - versta-dev
+    depends_on:
+      - postgres_versta
+        
+  frontend-app:
+    container_name: versta-frontend
+    build:
+      context: ./versta-client
+      dockerfile: Dockerfile
+    ports:
+      - "3000:5173"
+    depends_on:
+      - versta_app
+
+volumes:
+  postgres-order-data:
