@@ -1,37 +1,18 @@
 import { useState, useEffect } from "react";
-import { Container, Row, Col, Card } from 'react-bootstrap';
+import { Container, Row, Col, Card, Spinner } from 'react-bootstrap';
+import Loading from './Loading';
+import Error from './Error';
 import { useNavigate } from 'react-router-dom';
-import {ApiHelper} from "../ApiHelper.jsx";
+import {fetchOrders} from "../OrderApiHelper.jsx";
 
 const AllOrders = () => {
   const navigate = useNavigate();
-  const apiHelper = new ApiHelper();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchOrders = async () => {
-    try {
-        let query = `${apiHelper.orderServiceBaseAddress}/GetOrders`;
-        let options = {
-            method: 'GET'
-        }
-        const response = await fetch(query, options);
-        if (!response.ok) {
-            let localError = await response.json();
-            throw new Error(localError.error);
-        }
-        const result = await response.json();
-        setOrders(result);
-    } catch (err) {
-        setError(err);
-    } finally {
-        setLoading(false);
-    }
-  }
-
   useEffect(() => {
-    fetchOrders();
+    fetchOrders(setOrders, setError, setLoading);
   }, []);
 
   const ordersLocal = [
@@ -71,6 +52,9 @@ const AllOrders = () => {
     // Можно также передать state: navigate(`/order/${orderId}`, { state: { order } });
   };
 
+  if (loading) return <Loading/>;
+  if (error) return <Container><Error message={error.message}/></Container>;
+
   // Если список заказов пуст – показываем сообщение
   if (!orders.length) {
     return (
@@ -79,9 +63,6 @@ const AllOrders = () => {
       </Container>
     );
   }
-
-  if (loading) return <div>Loading data...</div>;
-  if (error) return <div>Error: {error.message}</div>;
 
   return (
     <Container className="mt-4">

@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using VerstaOrders;
+using VerstaOrders.Middleware;
+using VerstaOrders.Middleware.Error;
 using VerstaOrders.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,6 +20,9 @@ builder.Services.AddCors(o =>
             .AllowCredentials();
     }));
 
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 builder.Services.AddTransient<IOrderService, OrderService>();
 
 if (builder.Environment.IsDevelopment())
@@ -31,6 +36,7 @@ else
 
 var app = builder.Build();
 app.MapOpenApi();
+app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
 {

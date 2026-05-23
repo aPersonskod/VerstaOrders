@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import { Form, Button, Container, Row, Col, Alert } from 'react-bootstrap';
-import {ApiHelper} from "../ApiHelper.jsx";
+import Error from "./Error.jsx";
+import {createOrder} from "../OrderApiHelper.jsx";
 
 const CreateOrder = () => {
   const navigate = useNavigate();
-  const apiHelper = new ApiHelper();
+  const [error, setError] = useState();
   const [formData, setFormData] = useState({
     senderCity: '',
     senderAddress: '',
@@ -19,38 +20,6 @@ const CreateOrder = () => {
   const [errors, setErrors] = useState({});
   // Состояние успешной отправки (для демонстрации)
   const [submitted, setSubmitted] = useState(false);
-
-  const createOrder = async () => {
-    try {
-        let query = `${apiHelper.orderServiceBaseAddress}`;
-        let options = {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(
-                {
-                    "townSender": formData.senderCity,
-                    "addressSender": formData.senderAddress,
-                    "townReceiver": formData.receiverCity,
-                    "addressReceiver": formData.receiverAddress,
-                    "productWeight": formData.weight,
-                    "pickupDate": formData.pickupDate
-                }
-            ),
-        }
-        const response = await fetch(query, options);
-        if (!response.ok) {
-            let localError = await response.json();
-            alert(localError.error);
-            return "Ошибка сохранения данных !!!";
-        }
-    } catch (err) {
-        alert(err);
-    }
-    return "";
-  }
-
 
   // Обработчик изменения любого поля
   const handleChange = (e) => {
@@ -87,12 +56,7 @@ const CreateOrder = () => {
     } else {
       setErrors({});
       // Созранение на сервер
-      let res = await createOrder();
-      if(res === "") {
-        setSubmitted(true);
-      } else {
-        return;
-      }
+      await createOrder(formData, setError, setSubmitted);
       // Сбросить сообщение об успехе через 5 секунд
       setTimeout(() => setSubmitted(false), 5000);
     }
@@ -204,6 +168,8 @@ const CreateOrder = () => {
                 {errors.pickupDate}
               </Form.Control.Feedback>
             </Form.Group>
+
+            {error && <Error message={error.message}/>}
 
             <Button variant="primary" type="submit">
               Создать заказ

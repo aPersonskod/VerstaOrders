@@ -2,12 +2,13 @@ import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useParams } from "react-router";
 import { Form, Container, Row, Col, Card, Button } from 'react-bootstrap';
-import {ApiHelper} from "../ApiHelper.jsx";
+import Loading from './Loading';
+import Error from './Error';
+import { fetchOrder } from "../OrderApiHelper.jsx";
 
 const CurrentOrder = () => {
   const navigate = useNavigate();
   let { orderId } = useParams();
-  const apiHelper = new ApiHelper();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const defaultOrder = {
@@ -21,32 +22,12 @@ const CurrentOrder = () => {
   };
   const [data, setData] = useState();
 
-  const fetchOrder = async () => {
-    try {
-        let query = `${apiHelper.orderServiceBaseAddress}/${orderId}`;
-        let options = {
-            method: 'GET'
-        }
-        const response = await fetch(query, options);
-        if (!response.ok) {
-            let localError = await response.json();
-            throw new Error(localError.error);
-        }
-        const result = await response.json();
-        setData(result);
-    } catch (err) {
-        setError(err);
-    } finally {
-        setLoading(false);
-    }
-  }
-
   useEffect(() => {
-    fetchOrder();
+    fetchOrder(orderId, setData, setError, setLoading);
   }, []);
 
-  if (loading) return <div>Loading data...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+  if (loading) return <Loading/>;
+  if (error) return <Container><Error message={error.message}/></Container>;
 
   return (
     <Container className="mt-4">
