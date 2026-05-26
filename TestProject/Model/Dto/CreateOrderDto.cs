@@ -1,4 +1,4 @@
-namespace VerstaOrders.Model;
+namespace VerstaOrders.Model.Dto;
 
 public record CreateOrderDto(
     string TownSender,

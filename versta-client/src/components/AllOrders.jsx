@@ -46,9 +46,9 @@ const AllOrders = () => {
   ];
 
   // Обработчик клика по карточке – переход на страницу заказа
-  const handleCardClick = (orderId) => {
+  const handleCardClick = (orderNumber) => {
     // Пример маршрута: /order/123
-    navigate(`/order/${orderId}`);
+    navigate(`/order/${orderNumber}`);
     // Можно также передать state: navigate(`/order/${orderId}`, { state: { order } });
   };
 
@@ -69,10 +69,10 @@ const AllOrders = () => {
       <h2 className="mb-4">Список заказов</h2>
       <Row xs={1} md={2} lg={3} className="g-4">
         {orders.map((order) => (
-          <Col key={order.orderId}>
+          <Col key={order.orderNumber}>
             <Card
               className="h-100 shadow-sm order-card"
-              onClick={() => handleCardClick(order.orderId)}
+              onClick={() => handleCardClick(order.orderNumber)}
               style={{ cursor: 'pointer', transition: 'transform 0.2s' }}
               onMouseEnter={(e) =>
                 (e.currentTarget.style.transform = 'translateY(-5px)')

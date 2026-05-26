@@ -24,7 +24,7 @@ export const createOrder = async (formData, setError, setSubmitted) => {
     try {
         let query = `${orderServiceBaseAddress}`;
         let options = {
-            method: 'PUT',
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },

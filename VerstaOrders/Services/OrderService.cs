@@ -1,30 +1,31 @@
-﻿using System.Globalization;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using VerstaOrders.Model;
+using VerstaOrders.Model.Dto;
 
 namespace VerstaOrders.Services;
 
 public interface IOrderService
 {
-    Task<IEnumerable<Order>> GetAllOrders();
-    Task<Order> GetOrder(Guid orderId);
-    Task<Order> CreateOrder(CreateOrderDto order);
+    IEnumerable<OrderDto> GetAllOrders();
+    Task<OrderDto> GetOrder(string orderNumber);
+    Task<OrderDto> CreateOrder(CreateOrderDto order);
+    Task DeleteOrderByTownSender(string townSender);
+    Task ClearTestSequences(int year, int month);
 }
 
 public class OrderService(DataContext dataContext) : IOrderService
 {
-    public Task<IEnumerable<Order>> GetAllOrders() 
-        => Task.FromResult(dataContext.Orders.OrderBy(o => o.OrderNumber.Substring(0, 8))
-            .ThenBy(o => o.OrderNumber.Substring(o.OrderNumber.Length - 4)).AsEnumerable());
+    public IEnumerable<OrderDto> GetAllOrders() => dataContext.Orders.OrderBy(o => o.PickupDate)
+        .ThenBy(o => o.OrderNumber.Substring(o.OrderNumber.Length - 4)).Select(o => GetOrderDto(o));
 
-    public async Task<Order> GetOrder(Guid orderId)
+    public async Task<OrderDto> GetOrder(string orderNumber)
     {
-        var order = await dataContext.Orders.FindAsync(orderId);
-        if (order == null) throw new Exception($"Order with id {orderId} not found");
-        return await Task.FromResult(order);
+        var order = await dataContext.Orders.FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
+        if (order == null) throw new Exception($"Order with id {orderNumber} not found");
+        return await Task.FromResult(GetOrderDto(order));
     }
 
-    public async Task<Order> CreateOrder(CreateOrderDto orderDto)
+    public async Task<OrderDto> CreateOrder(CreateOrderDto orderDto)
     {
         var newOrderNumber = await GenerateOrderNumber(orderDto);
         if (newOrderNumber == null) throw new Exception("Order number was not created");
@@ -39,38 +40,61 @@ public class OrderService(DataContext dataContext) : IOrderService
             orderDto.PickupDate.ToUniversalTime());
         dataContext.Orders.Add(order);
         await dataContext.SaveChangesAsync();
-        return await Task.FromResult(order);
+        return await Task.FromResult(GetOrderDto(order));
+    }
+    
+    public async Task DeleteOrderByTownSender(string townSender)
+    {
+        var orders = dataContext.Orders.Where(o => o.TownSender == townSender);
+        foreach (var order in orders)
+        {
+            dataContext.Orders.Remove(order);
+        }
+        await dataContext.SaveChangesAsync();
+    }
+
+    public async Task ClearTestSequences(int year, int month)
+    {
+        var foundSequence = dataContext.OrderDateSequences.FirstOrDefault(x => x.Year == year && x.Month == month);
+        if (foundSequence == null) return;
+        foundSequence.CurrentValue = 0;
+        await dataContext.SaveChangesAsync();
     }
 
     private async Task<string> GenerateOrderNumber(CreateOrderDto order)
     {
-        var lastOrder = await dataContext.Orders.OrderBy(o => o.OrderNumber.Substring(o.OrderNumber.Length - 4)).LastOrDefaultAsync();
-        return lastOrder == null 
-            ? new OrderNumberGenerator(null).Generate(order.PickupDate)
-            : new OrderNumberGenerator(lastOrder.OrderNumber).Generate(order.PickupDate);
+        var foundOrderSequence = await dataContext.OrderDateSequences
+            .FirstOrDefaultAsync(o => o.Year == order.PickupDate.Year && o.Month == order.PickupDate.Month);
+        if (foundOrderSequence == null)
+        {
+            var orderSequence = new OrderDateSequence()
+            {
+                Month = order.PickupDate.Month,
+                Year = order.PickupDate.Year,
+                CurrentValue = 1
+            };
+            await dataContext.OrderDateSequences.AddAsync(orderSequence);
+        }
+        else
+        {
+            foundOrderSequence.CurrentValue++;
+        }
+        await dataContext.SaveChangesAsync();
+
+        return new OrderNumberGenerator(order.PickupDate, foundOrderSequence?.CurrentValue ?? 1).Generate();
     }
+
+    private static OrderDto GetOrderDto(Order o) => 
+        new(o.OrderNumber, 
+            o.TownSender,
+            o.AddressSender,
+            o.TownReceiver,
+            o.AddressReceiver,
+            o.ProductWeight,
+            o.PickupDate.ToUniversalTime());
 }
 
-public class OrderNumberGenerator
+public class OrderNumberGenerator(DateTime pickupDate, int number = 1)
 {
-    private readonly DateTime? _date;
-    private readonly int _number;
-    public OrderNumberGenerator(string? orderNumber)
-    {
-        if (orderNumber == null) return;
-        var cutOrd = orderNumber.Replace("ORD-", "");
-        var dateStr = cutOrd.Substring(0, 8);
-        _date = DateTime.ParseExact(dateStr, "ddMMyyyy", CultureInfo.InvariantCulture);
-        var numberStr = cutOrd.Substring(cutOrd.Length - 4);
-        _number = int.Parse(numberStr);
-    }
-
-    public string Generate(DateTime newDate)
-    {
-        if (_date == null) return CreateNumber(newDate, 1);
-        var datesEquals = newDate.Date == _date?.Date;
-        return CreateNumber(newDate, datesEquals ? _number + 1 : 1);
-    }
-    private string CreateNumber(DateTime date, int number)
-        => $"ORD-{date.Date.Day:D2}{date.Date.Month:D2}{date.Date.Year}{number:D4}";
+    public string Generate() => $"ORD-{pickupDate.Date.Month:D2}{pickupDate.Date.Year}{number:D4}";
 }

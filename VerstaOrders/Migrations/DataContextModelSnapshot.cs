@@ -64,7 +64,7 @@ namespace VerstaOrders.Migrations
                             OrderId = new Guid("a582d854-2216-42b7-95b9-c9b2c2d7d669"),
                             AddressReceiver = "Невский пр., д. 25",
                             AddressSender = "ул. Тверская, д. 10",
-                            OrderNumber = "ORD-220520260001",
+                            OrderNumber = "ORD-0520260001",
                             PickupDate = new DateTime(2026, 5, 21, 21, 0, 0, 0, DateTimeKind.Utc),
                             ProductWeight = 15.5,
                             TownReceiver = "Санкт-Петербург",
@@ -75,7 +75,7 @@ namespace VerstaOrders.Migrations
                             OrderId = new Guid("5c5759c6-4b4e-4150-bbe0-912c1c8f8c34"),
                             AddressReceiver = "пр. Ленина, 100",
                             AddressSender = "ул. Баумана, 5",
-                            OrderNumber = "ORD-220520260002",
+                            OrderNumber = "ORD-0520260002",
                             PickupDate = new DateTime(2026, 5, 21, 21, 0, 0, 0, DateTimeKind.Utc),
                             ProductWeight = 8.1999999999999993,
                             TownReceiver = "Екатеринбург",
@@ -86,11 +86,45 @@ namespace VerstaOrders.Migrations
                             OrderId = new Guid("9288547b-e8f0-4d05-add5-5f29a4a3f94b"),
                             AddressReceiver = "Океанский пр., 7",
                             AddressSender = "Красный пр., 12",
-                            OrderNumber = "ORD-220520260003",
+                            OrderNumber = "ORD-0520260003",
                             PickupDate = new DateTime(2026, 5, 21, 21, 0, 0, 0, DateTimeKind.Utc),
                             ProductWeight = 42.0,
                             TownReceiver = "Владивосток",
                             TownSender = "Новосибирск"
+                        });
+                });
+
+            modelBuilder.Entity("VerstaOrders.Model.OrderDateSequence", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CurrentValue")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("CurrentValue"));
+
+                    b.Property<int>("Month")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("OrderDateSequences");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CurrentValue = 3,
+                            Month = 5,
+                            Year = 2026
                         });
                 });
 #pragma warning restore 612, 618
