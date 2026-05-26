@@ -31,10 +31,10 @@ public class OrderController(IOrderService orderService) : ControllerBase
 
     #region for test
 
-    [HttpDelete("{townSender}")]
-    public async Task<IActionResult> Delete(string townSender)
+    [HttpDelete("{year:int}")]
+    public async Task<IActionResult> Delete(int year)
     {
-        await orderService.DeleteOrderByTownSender(townSender);
+        await orderService.DeleteOrdersByYear(year);
         return Ok();
     }
 

@@ -9,7 +9,7 @@ public interface IOrderService
     IEnumerable<OrderDto> GetAllOrders();
     Task<OrderDto> GetOrder(string orderNumber);
     Task<OrderDto> CreateOrder(CreateOrderDto order);
-    Task DeleteOrderByTownSender(string townSender);
+    Task DeleteOrdersByYear(int year);
     Task ClearTestSequences(int year, int month);
 }
 
@@ -27,7 +27,7 @@ public class OrderService(DataContext dataContext) : IOrderService
 
     public async Task<OrderDto> CreateOrder(CreateOrderDto orderDto)
     {
-        var newOrderNumber = await GenerateOrderNumber(orderDto);
+        var newOrderNumber = GenerateOrderNumberMutex(orderDto);
         if (newOrderNumber == null) throw new Exception("Order number was not created");
         var order = new Order(
             Guid.NewGuid(),
@@ -43,21 +43,17 @@ public class OrderService(DataContext dataContext) : IOrderService
         return await Task.FromResult(GetOrderDto(order));
     }
     
-    public async Task DeleteOrderByTownSender(string townSender)
+    public async Task DeleteOrdersByYear(int year)
     {
-        var orders = dataContext.Orders.Where(o => o.TownSender == townSender);
-        foreach (var order in orders)
-        {
-            dataContext.Orders.Remove(order);
-        }
+        var orders = dataContext.Orders.Where(o => o.PickupDate.Year == year);
+        dataContext.Orders.RemoveRange(orders);
         await dataContext.SaveChangesAsync();
     }
 
     public async Task ClearTestSequences(int year, int month)
     {
-        var foundSequence = dataContext.OrderDateSequences.FirstOrDefault(x => x.Year == year && x.Month == month);
-        if (foundSequence == null) return;
-        foundSequence.CurrentValue = 0;
+        var foundSequences = dataContext.OrderDateSequences.Where(x => x.Year == year && x.Month == month); 
+        dataContext.OrderDateSequences.RemoveRange(foundSequences);
         await dataContext.SaveChangesAsync();
     }
 
@@ -82,6 +78,42 @@ public class OrderService(DataContext dataContext) : IOrderService
         await dataContext.SaveChangesAsync();
 
         return new OrderNumberGenerator(order.PickupDate, foundOrderSequence?.CurrentValue ?? 1).Generate();
+    }
+
+    private static readonly Mutex _mutex = new Mutex();
+    private string GenerateOrderNumberMutex(CreateOrderDto order)
+    {
+        var generatedOrderNumber = "";
+        if (_mutex.WaitOne())
+        {
+            try
+            {
+                var foundOrderSequence = dataContext.OrderDateSequences
+                    .FirstOrDefault(o => o.Year == order.PickupDate.Year && o.Month == order.PickupDate.Month);
+                if (foundOrderSequence == null)
+                {
+                    var orderSequence = new OrderDateSequence()
+                    {
+                        Month = order.PickupDate.Month,
+                        Year = order.PickupDate.Year,
+                        CurrentValue = 1
+                    };
+                    dataContext.OrderDateSequences.Add(orderSequence);
+                }
+                else
+                {
+                    foundOrderSequence.CurrentValue++;
+                }
+                dataContext.SaveChanges();
+                generatedOrderNumber = new OrderNumberGenerator(order.PickupDate, foundOrderSequence?.CurrentValue ?? 1).Generate();
+            }
+            finally
+            {
+                _mutex.ReleaseMutex();
+            }
+        }
+
+        return generatedOrderNumber;
     }
 
     private static OrderDto GetOrderDto(Order o) => 
