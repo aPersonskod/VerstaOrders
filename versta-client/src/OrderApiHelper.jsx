@@ -1,8 +1,8 @@
 export const orderServiceBaseAddress = `http://localhost:5259/Order`;
 
-export const fetchOrders = async (setOrders, setError, setLoading) => {
+export const fetchOrders = async (setOrders, pageNumber, pageSize, setError, setLoading) => {
     try {
-        let query = `${orderServiceBaseAddress}/GetOrders`;
+        let query = `${orderServiceBaseAddress}/GetOrders?pageNumber=${pageNumber}&pageSize=${pageSize}`;
         let options = {
             method: 'GET'
         }
@@ -34,7 +34,7 @@ export const createOrder = async (formData, setError, setSubmitted) => {
                     "addressSender": formData.senderAddress,
                     "townReceiver": formData.receiverCity,
                     "addressReceiver": formData.receiverAddress,
-                    "productWeight": formData.weight,
+                    "productWeight": Number(formData.weight),
                     "pickupDate": formData.pickupDate
                 }
             ),

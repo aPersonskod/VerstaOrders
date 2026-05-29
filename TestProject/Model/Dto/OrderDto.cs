@@ -1,4 +1,4 @@
-﻿namespace VerstaOrders.Model.Dto;
+﻿namespace TestProject.Model.Dto;
 
 public record OrderDto(
     string OrderNumber,
@@ -6,5 +6,5 @@ public record OrderDto(
     string AddressSender,
     string TownReceiver,
     string AddressReceiver,
-    double ProductWeight,
+    decimal ProductWeight,
     DateTime PickupDate);

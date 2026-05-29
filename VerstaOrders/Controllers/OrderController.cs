@@ -9,10 +9,16 @@ namespace VerstaOrders.Controllers;
 public class OrderController(IOrderService orderService) : ControllerBase
 {
     [HttpGet("[action]")]
-    public async Task<IActionResult> GetOrders()
+    public async Task<IActionResult> GetOrders([FromQuery]int pageNumber = 1, [FromQuery]int pageSize = 6)
     {
-        var orders = orderService.GetAllOrders();
-        return Ok(orders);
+        if (pageNumber < 1) pageNumber = 1;
+        if (pageSize < 1) pageSize = 6;
+        
+        var skipAmount = (pageNumber - 1) * pageSize;
+        var allOrders = orderService.GetAllOrders();
+        var orders = allOrders.Skip(skipAmount).Take(pageSize).ToList();
+        var response = new PaginatedOrdersDto(allOrders!.Count(), pageNumber, pageSize, orders);
+        return Ok(response);
     }
 
     [HttpGet("{orderNumber}")]

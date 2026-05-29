@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Container, Row, Col, Card, Spinner } from 'react-bootstrap';
+import { Container, Row, Col, Card, Spinner, Pagination } from 'react-bootstrap';
 import Loading from './Loading';
 import Error from './Error';
 import { useNavigate } from 'react-router-dom';
@@ -10,10 +10,16 @@ const AllOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 6;
+  // Вычисление текущих заказов для отображения
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const totalPages = Math.ceil(orders.recordsCount / ordersPerPage);
 
   useEffect(() => {
-    fetchOrders(setOrders, setError, setLoading);
-  }, []);
+    fetchOrders(setOrders, currentPage, ordersPerPage, setError, setLoading);
+  }, [currentPage]);
 
   const ordersLocal = [
   {
@@ -52,11 +58,32 @@ const AllOrders = () => {
     // Можно также передать state: navigate(`/order/${orderId}`, { state: { order } });
   };
 
+  // Смена страницы
+  const goToPage = (pageNumber) => setCurrentPage(pageNumber);
+  const goToPrev = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+  const goToNext = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  // Рендер элементов пагинации
+  const renderPaginationItems = () => {
+    let items = [];
+    for (let number = 1; number <= totalPages; number++) {
+      items.push(
+          <Pagination.Item
+              key={number}
+              active={number === currentPage}
+              onClick={() => goToPage(number)}
+          >
+            {number}
+          </Pagination.Item>
+      );
+    }
+    return items;
+  };
+
   if (loading) return <Loading/>;
   if (error) return <Container><Error message={error.message}/></Container>;
 
   // Если список заказов пуст – показываем сообщение
-  if (!orders.length) {
+  if (!orders.orders.length) {
     return (
       <Container className="mt-4">
         <p className="text-center">Нет доступных заказов</p>
@@ -68,7 +95,7 @@ const AllOrders = () => {
     <Container className="mt-4">
       <h2 className="mb-4">Список заказов</h2>
       <Row xs={1} md={2} lg={3} className="g-4">
-        {orders.map((order) => (
+        {orders.orders.map((order) => (
           <Col key={order.orderNumber}>
             <Card
               className="h-100 shadow-sm order-card"
@@ -101,6 +128,17 @@ const AllOrders = () => {
           </Col>
         ))}
       </Row>
+      
+      {/* Пагинация – показываем только если страниц больше 1 */}
+      {totalPages > 1 && (
+          <div className="d-flex justify-content-center mt-4">
+            <Pagination>
+              <Pagination.Prev onClick={goToPrev} disabled={currentPage === 1} />
+              {renderPaginationItems()}
+              <Pagination.Next onClick={goToNext} disabled={currentPage === totalPages} />
+            </Pagination>
+          </div>
+      )}
     </Container>
   );
 }

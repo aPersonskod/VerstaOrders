@@ -5,5 +5,5 @@ public record CreateOrderDto(
     string AddressSender,
     string TownReceiver,
     string AddressReceiver,
-    double ProductWeight,
+    decimal ProductWeight,
     DateTime PickupDate);

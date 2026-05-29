@@ -1,5 +1,5 @@
 using TestProject.Ext;
-using VerstaOrders.Model.Dto;
+using TestProject.Model.Dto;
 
 namespace TestProject;
 
@@ -103,8 +103,8 @@ public class Tests
         });
 
         // get all orders
-        var createdOrders = await $"{baseAddress}/GetOrders".GetQuery<IEnumerable<OrderDto>>();
-        return createdOrders;
+        var createdOrders = await $"{baseAddress}/GetOrders?pageNumber={1}&pageSize=100".GetQuery<PaginatedOrdersDto>();
+        return createdOrders!.Orders;
     }
 
     private async Task CleanTestData(string baseAddress)

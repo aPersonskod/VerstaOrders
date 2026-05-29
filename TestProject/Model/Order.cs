@@ -1,4 +1,4 @@
-﻿namespace VerstaOrders.Model;
+﻿namespace TestProject.Model;
 
 public record Order(
     Guid OrderId,
@@ -7,5 +7,5 @@ public record Order(
     string AddressSender,
     string TownReceiver,
     string AddressReceiver,
-    double ProductWeight,
+    decimal ProductWeight,
     DateTime PickupDate);

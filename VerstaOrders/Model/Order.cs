@@ -7,5 +7,5 @@ public record Order(
     string AddressSender,
     string TownReceiver,
     string AddressReceiver,
-    double ProductWeight,
+    decimal ProductWeight,
     DateTime PickupDate);
